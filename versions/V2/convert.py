@@ -70,7 +70,7 @@ HALFWIDTH_CJK = {0xFF61: '。', 0xFF62: '「', 0xFF63: '」', 0xFF64: '、'}
 
 # PDF 는 한컴 글꼴 대신 나눔 글꼴로 찍으니 한글이 2~6% 좁다 -> 변환기가 HTML 에 따로 적어 둔 폭 보정(--hd)을 자간(--ls)에 더한다(hwp2html.spacing_css).
 # HTML 을 브라우저로 볼 때는 더하지 않는다(브라우저에는 진짜 한컴 글꼴이 있어 보정하면 글이 넓어져 줄이 먼저 꺾인다).
-PDF_CSS = '[style*="--hd:"]{letter-spacing:calc(var(--ls,0em) + var(--hd))!important}'
+PDF_CSS = '[style*="--hd:"]{letter-spacing:calc(var(--ls,0em) + var(--hd))!important} .mo.mm{display:block!important}'
 
 
 _HANGUL_PAIR = re.compile('(?<=[가-힣])(?=[가-힣])')

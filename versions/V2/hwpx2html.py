@@ -2,7 +2,7 @@
 import os, sys, zipfile, html, re, base64, io
 from lxml import etree
 from PIL import Image
-from hwp2html import PUA, HANGUL_DELTA, SPLIT_ON, split_plan, head_rows, spacing_css, keep_rows      # 한컴 Wingdings/Symbol 글머리(U+F09F 등) -> 일반 유니코드. 브라우저는 사설 영역 문자를 못 그린다
+from hwp2html import PUA, HANGUL_DELTA, SPLIT_ON, split_plan, head_rows, spacing_css, keep_rows, heavy_css, mid_dot      # 한컴 Wingdings/Symbol 글머리(U+F09F 등) -> 일반 유니코드. 브라우저는 사설 영역 문자를 못 그린다
 
 _SL = os.environ.get('STORED_LAYOUT', '')
 STORED = _SL in ('1', 'all', 'lines')       # 저장된 줄 끊김대로
@@ -102,6 +102,7 @@ class Conv:
         if c.get('textColor','#000000') != '#000000': st.append(f'color:{c.get("textColor")}')
         if c.get('shadeColor','none') not in ('none','#FFFFFF'): st.append(f'background-color:{c.get("shadeColor")}')
         if c.find(HH+'bold') is not None: st.append('font-weight:bold')
+        else: st += heavy_css(fams[0] if fams else '', False)
         if c.find(HH+'italic') is not None: st.append('font-style:italic')
         deco = []
         u = c.find(HH+'underline')
@@ -465,13 +466,14 @@ def convert(src, dst):
            'p,div{margin:0;orphans:1;widows:1}\np,div,td{white-space:pre-wrap;word-break:keep-all;overflow-wrap:break-word}\ntd>p,td>div{white-space:pre-wrap}\n'
            '.page{white-space:normal}\n'     # 문단 사이 줄바꿈 글자가 pre-wrap 에서 빈 줄 한 줄로 그려져 문단마다 14pt 가량 늘어나던 문제(쪽 수가 한컴의 2배가 되던 주원인)
            'td{box-sizing:border-box}\n'      # 칸의 height 는 안쪽 여백까지 포함한 값(HWPX cellSz). 기본값(content-box)이면 칸마다 여백만큼 커져서 표가 세로로 길어진다
+           '.mid{font-family:"바탕","Batang","Nanum Myeongjo",serif}\n'      # 가운뎃점 ㆍ(U+318D)을 바탕 글꼴로(hwp2html.mid_dot)
            '@media print{body{background:#fff}.page{box-shadow:none;margin:0;padding:0;width:auto;min-height:0}}')
     n_body = len(blocks)
     for h in reversed(cv.hf['header']): blocks.insert(0, f'<div class="hwp-header">{h}</div>')
     for h in cv.hf['footer']: blocks.append(f'<div class="hwp-footer">{h}</div>')
     doc = (f'<!DOCTYPE html>\n<html lang="ko"><head><meta charset="utf-8">\n<title>{html.escape(title.strip())}</title>\n'
            f'<style>\n{css}\n</style></head>\n<body><div class="page">\n' + '\n'.join(blocks) + '\n</div></body></html>\n')
-    open(dst, 'w', encoding='utf-8').write(doc)
+    open(dst, 'w', encoding='utf-8').write(mid_dot(doc))
     if SKIPPED: print(f'경고: 읽을 수 없는 그림 {len(SKIPPED)}개를 뺐습니다 (벡터·깨진 그림: {", ".join(sorted(set(SKIPPED)))})', file=sys.stderr)
     return n_body
 

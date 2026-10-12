@@ -274,10 +274,34 @@ HANGUL_DELTA = {'함초롬바탕': 0.024, '함초롬돋움': 0.039, '휴먼명�
                 '바탕': 0.050, '바탕체': 0.065, 'Batang': 0.050, 'BatangChe': 0.065, '돋움': 0.061, '돋움체': 0.062, 'Dotum': 0.061, 'DotumChe': 0.062, 'HY헤드라인M': 0.073, 'HY견고딕': 0.063, '한양견고딕': 0.062}
 
 
+# 글꼴 자체가 굵게 디자인된 한컴·한양 글꼴(HY헤드라인M 은 '굵게' 속성 없이도 한컴에서 굵게 보인다). 이 글꼴이 없는 PC·나눔 글꼴 대체 PDF 는 보통 굵기로 나와 제목이 약해졌다 → 굵게 속성이 없어도 굵게 준다.
+# font-synthesis-weight:none = 진짜 그 글꼴이 있으면 인위적으로 더 굵히지 않는다(굵은 글꼴이 따로 있는 대체 글꼴만 굵어짐).
+HEAVY_FACE = re.compile(r'헤드라인|견고딕|태고딕|Black|Heavy|ExtraBold|HY[가-힣]+B$')
+
+
+def mid_dot(doc):
+    """가운뎃점 'ㆍ'(U+318D, 원래는 옛한글 아래아)은 글꼴마다 모양이 다르다. 한컴(바탕)은 가운데의 동그라미인데 윈도 브라우저는 대체 글꼴(맑은 고딕)의 아래아 모양 '、' 로 그린다(공고·법령 문서에 흔함).
+    글자는 그대로 두고 바탕 글꼴로 그리게 감싼다(`.mid`). 컨테이너 PDF 에서는 바탕 → 나눔명조라 전과 같다. <style>·<title> 안은 건드리지 않는다."""
+    if 'ㆍ' not in doc: return doc
+    out, skip = [], False
+    for tok in re.split(r'(<[^>]*>)', doc):
+        if tok[:1] == '<':
+            low = tok[:9].lower()
+            if low.startswith(('<style', '<title')): skip = True
+            elif low.startswith(('</style', '</title')): skip = False
+        elif not skip and 'ㆍ' in tok: tok = tok.replace('ㆍ', '<span class="mid">ㆍ</span>')
+        out.append(tok)
+    return ''.join(out)
+
+
+def heavy_css(face, bold):
+    return ['font-weight:700;font-synthesis-weight:none'] if not bold and face and HEAVY_FACE.search(face) else []
+
+
 def family(face):
     """글꼴 이름 -> font-family. 컨테이너에서는 fonts.conf 가 한컴 글꼴을 나눔 글꼴로 바꿔 준다. 못 찾을 때를 위해 고딕/명조 계열만 덧붙인다."""
     face = re.sub(r'''["'<>&;]''', '', face)
-    return "font-family:'%s',%s" % (face, 'sans-serif' if re.search('돋움|고딕|굴림|Gothic|Sans', face) else 'serif')
+    return "font-family:'%s',%s" % (face, 'sans-serif' if re.search('돋움|고딕|굴림|Gothic|Sans|헤드라인|산세리프', face) else 'serif')
 
 
 def form_text(ctl):
@@ -353,6 +377,7 @@ def span_style(cs, lang=0, half=False):
     if cs['sup']: st.append('vertical-align:super')
     if cs['sub']: st.append('vertical-align:sub')
     if cs['bold']: st.append('font-weight:700')
+    else: st += heavy_css(L['face'], False)
     if cs['italic']: st.append('font-style:italic')
     deco = (['underline'] if cs['underline'] == 1 else ['overline'] if cs['underline'] == 3 else []) + (['line-through'] if cs['strike'] else [])
     if deco: st.append('text-decoration:' + ' '.join(deco))
@@ -751,7 +776,7 @@ def master_layer(sd, pw, ph, ml, mt, mr, mb):
             if attr & 1: x0, y0, x1, y1 = sl, st_, pw - sr, ph - sb            # 종이 기준: 종이 가장자리에서 안쪽으로
             else: x0, y0, x1, y1 = ml - sl, mt - st_, pw - mr + sr, ph - mb + sb      # 본문 기준: 본문 가장자리에서 바깥쪽으로
             css = ';'.join(border_css(side, b) for side, b in zip(('left', 'right', 'top', 'bottom'), bfd['borders']))
-            out += '<div class="mo" style="--px:%gpt;--py:%gpt;--cx:%gpt;--cy:%gpt;width:%gpt;height:%gpt;box-sizing:border-box;%s"></div>' % (x0, y0, x0 - ml, y0 - mt, x1 - x0, y1 - y0, css)
+            out += '<div class="%s" style="--px:%gpt;--py:%gpt;--cx:%gpt;--cy:%gpt;width:%gpt;height:%gpt;box-sizing:border-box;%s"></div>' % ('mo mm' if x0 < ml or y0 < mt else 'mo', x0, y0, x0 - ml, y0 - mt, x1 - x0, y1 - y0, css)
     i = next((k for k, c in enumerate(sd.ch) if c.tag == 72), None)
     if i is not None:
         paras = []
@@ -811,7 +836,7 @@ def render_gso(ctl):
     if MASTER[0] and not inline:       # 바탕쪽의 떠 있는 개체: 모든 쪽의 정해진 자리에(인쇄는 position:fixed, 화면은 absolute). 좌표는 종이 기준 pt, 쪽 기준이면 여백을 더한다
         pl, pt = MASTER[0]; attr, vo, ho = struct.unpack_from('<Iii', ctl.p, 4)
         px = ho / 100 + (pl if (attr >> 8) & 3 == 1 else 0); py = vo / 100 + (pt if (attr >> 3) & 3 == 1 else 0)
-        r = '<div class="mo" style="--px:%gpt;--py:%gpt;--cx:%gpt;--cy:%gpt">%s</div>' % (px, py, px - pl, py - pt, r)
+        r = '<div class="%s" style="--px:%gpt;--py:%gpt;--cx:%gpt;--cy:%gpt">%s</div>' % ('mo mm' if px < pl or py < pt else 'mo', px, py, px - pl, py - pt, r)
     return r
 
 
@@ -931,16 +956,18 @@ def convert(src, dst):
 body{{margin:0;background:#e9eaec;font-family:"함초롬바탕","HCR Batang","Batang","Noto Serif KR","Malgun Gothic",serif;color:#000}}
 {page_css}
 p{{margin:0;word-break:keep-all;overflow-wrap:break-word;orphans:1;widows:1}}
-@media print{{.pgno::before{{content:counter(page)}} .mo{{position:fixed;left:var(--cx);top:var(--cy)}} .fo{{position:absolute;left:var(--cx);top:var(--cy)}}}}
+@media print{{.pgno::before{{content:counter(page)}} .mo{{position:fixed;left:var(--cx);top:var(--cy)}} .mo.mm{{display:none}} .fo{{position:absolute;left:var(--cx);top:var(--cy)}}}}      /* 쪽 여백 안(mm)의 바탕쪽 개체는 크롬·엣지 인쇄가 여백에 못 그리고 엉뚱한 쪽 아래로 밀어 글과 겹친다 → 숨긴다. PDF 변환(WeasyPrint)은 convert.PDF_CSS 가 다시 보이게 한다 */
 @media screen{{.page{{position:relative}} .mo,.fo{{position:absolute;left:var(--px);top:var(--py)}}}}
 .tl{{flex:0 1 auto}} .tr{{flex:0 0 auto;text-align:right}} .tf{{flex:1 1 auto;margin:0 .2em;min-width:.5em;height:.8em}}
 .hwp-table{{border-collapse:collapse}}
 .hwp-table td{{box-sizing:border-box;word-break:keep-all}}
 figure{{margin:4px 0;text-align:center}} figure img{{max-width:100%;height:auto}}
+.mid{{font-family:'바탕','Batang','Nanum Myeongjo',serif}}
 </style></head>
 <body>
 {body}
 </body></html>'''
+    page = mid_dot(page)
     Path(dst).write_text(page, encoding='utf-8')
     if SKIPPED: print(f'경고: 읽을 수 없는 그림 {len(SKIPPED)}개를 뺐습니다 (벡터·깨진 그림: {", ".join(sorted(set(SKIPPED)))})', file=sys.stderr)
     return dict(bytes=len(page), images=[s for _, s in IMAGES], tables=page.count('<table'), fonts=sorted({cs['face'] for cs in charshapes if cs['face']}))

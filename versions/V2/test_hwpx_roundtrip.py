@@ -154,7 +154,7 @@ def demo():
         assert 'column-count:2' in h and 'column-rule:' in h and 'class="tf"' in h and 'linear-gradient' in h, '다단·탭·그라데이션이 없음'
         assert '@page{size:841.88pt 595.28pt' in h, '가로 쪽이 반영 안 됨'
         convert.convert(hy, tmp / 'h.html'); h = (tmp / 'h.html').read_text(encoding='utf-8')
-        assert h.count('class="mo"') == 2 and h.count('<img') >= 4, '바탕쪽 그림이 없음'
+        assert h.count('class="mo"') + h.count('class="mo mm"') == 2 and h.count('<img') >= 4, '바탕쪽 그림이 없음'
         convert.convert(cal, tmp / 'c.html'); h = (tmp / 'c.html').read_text(encoding='utf-8')
         assert 'border:1px solid #7f7f7f' in h, '입력 상자·단추가 없음'
         print('HWP 번호·다단·탭·바탕쪽·양식 상자 OK')
@@ -218,6 +218,13 @@ def demo():
     assert kr([(1, 2, 139)], 0, 22.3) == {0, 1}, '제출 서류 표: 첫 줄 + 걸친 묶음의 윗줄'
     assert kr([(1, 2, 300)], 0, 22.3) == {0} and kr([(1, 2, 139)], 0, 120) == {1}, '큰 묶음·높은 첫 줄은 가를 수 있다'
     print('표 줄 붙이기 OK')
+    hv = hwp2html.heavy_css      # 글꼴 자체가 굵은 글꼴(HY헤드라인M 등)은 '굵게' 속성이 없어도 굵게, 이미 굵거나 보통 글꼴은 그대로
+    assert hv('HY헤드라인M', False) and hv('한양견고딕', False) and hv('HY울릉도B', False) and not hv('맑은 고딕', False) and not hv('HY울릉도M', False) and not hv('HY헤드라인M', True), '굵은 글꼴 판정'
+    assert hwp2html.family('HY헤드라인M').endswith('sans-serif') and hwp2html.family('산세리프').endswith('sans-serif') and hwp2html.family('휴먼명조').endswith('serif'), '글꼴 계열'
+    print('굵은 글꼴 OK')
+    dot = chr(0x318d)
+    assert hwp2html.mid_dot(f'<title>{dot}</title><style>.a{{}}</style><p>법령{dot}행정</p>') == f'<title>{dot}</title><style>.a{{}}</style><p>법령<span class="mid">{dot}</span>행정</p>', '가운뎃점 감싸기'
+    print('가운뎃점 OK')
     # HTML 은 글꼴 폭 보정(--hd)을 따로 적어 letter-spacing 에 안 섞고, PDF 로 찍을 때만 더한다 / PDF 용 줄 꺾임 보정(어절 안 끊기·문단 끝 글자 간격 0)
     import re as _re
     assert hwp2html.spacing_css(0, 0.056) == ['--hd:0.056em'] and hwp2html.spacing_css(-0.05, 0.056) == ['letter-spacing:-0.05em', '--hd:0.056em;--ls:-0.05em'] and hwp2html.spacing_css(0, 0) == []
