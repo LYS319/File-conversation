@@ -1,0 +1,25 @@
+# 사용: (이 폴더에서) docker compose up -d --build   →   http://localhost:8501   (호스트의 localhost에서만 접속된다)
+name: file-converter                    # 폴더 이름(V2 등)이 바뀌어도 컨테이너·네트워크 이름이 그대로 유지되게 고정
+services:
+  converter:
+    build: .
+    image: file-converter:local
+    ports:
+      - "127.0.0.1:8501:8501"          # 127.0.0.1을 빼면 같은 네트워크의 누구나 업로드할 수 있다
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g                    # 업로드 임시 파일. tmpfs도 mem_limit에 포함된다
+    volumes:
+      - ./logs:/app/logs                # 요청 로그(logs/requests.jsonl)만 호스트에 남는다
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
+    cpus: 2
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

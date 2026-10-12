@@ -1,0 +1,10 @@
+claude-agent-sdk==0.2.153
+python-dotenv
+langfuse
+openinference-instrumentation-claude-agent-sdk
+pdfplumber
+lxml
+magika==0.6.3
+pymupdf==1.28.2
+pillow==12.3.0
+streamlit==1.65.0

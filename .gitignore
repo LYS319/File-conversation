@@ -1,0 +1,18 @@
+.env
+jobs/
+.venv/
+logs/
+corpus/
+
+# 올리지 않는 것: 사용자 문서와 그 변환 결과, 남의 저장소 사본(langfuse), 공식 릴리스에서 받는 실행 파일, 로컬 설정, 파이썬 캐시
+samples/
+results/
+langfuse/
+.claude/
+tools/hwp-cli/hwp.exe
+tools/rhwp/rhwp
+__pycache__/
+*.pyc
+# 사용자 개인 문서(인수인계·분석·계획서·보고서 등) — V1 안의 docs 사본 포함
+docs/
+**/docs/
