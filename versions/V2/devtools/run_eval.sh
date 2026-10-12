@@ -25,7 +25,7 @@ else
   [ -n "$STORED_LAYOUT" ] && OUT="${OUT}_stored" && mkdir -p "corpus/_eval/$OUT"       # 실험: 한컴이 저장한 줄 끊김·쪽 시작대로(STORED_LAYOUT=1 sh run_eval.sh …)
   [ -n "$EVAL_TAG" ] && OUT="${OUT}_$EVAL_TAG" && mkdir -p "corpus/_eval/$OUT"       # 실험 꼬리표: EVAL_TAG=s120 SPLIT_ROWS=on SPLIT_MIN=120 sh run_eval.sh user -> corpus/_eval/user_s120 (기준선 폴더를 덮어쓰지 않는다)
   MSYS_NO_PATHCONV=1 docker run --rm --network none --read-only --tmpfs /tmp:size=2g --cap-drop ALL --security-opt no-new-privileges --memory 6g -e STORED_LAYOUT="$STORED_LAYOUT" ${SPLIT_ROWS:+-e SPLIT_ROWS=$SPLIT_ROWS} \
-    ${SPLIT_MIN:+-e SPLIT_MIN=$SPLIT_MIN} ${SPLIT_FILL:+-e SPLIT_FILL=$SPLIT_FILL} ${SPLIT_OVER:+-e SPLIT_OVER=$SPLIT_OVER} \
+    ${KEEP_ROWS:+-e KEEP_ROWS=$KEEP_ROWS} ${SPLIT_MIN:+-e SPLIT_MIN=$SPLIT_MIN} ${SPLIT_FILL:+-e SPLIT_FILL=$SPLIT_FILL} ${SPLIT_OVER:+-e SPLIT_OVER=$SPLIT_OVER} \
     -v "$ROOT/versions/V2:/work:ro" -v "$ROOT/corpus:/c:ro" -v "$ROOT/samples:/samples:ro" -v "$ROOT/corpus/_eval/$OUT:/out" \
     pdftest:wp python /work/devtools/eval_layout.py "$BASE" "$MAN" /out "$@"
 fi

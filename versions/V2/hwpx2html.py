@@ -2,7 +2,7 @@
 import os, sys, zipfile, html, re, base64, io
 from lxml import etree
 from PIL import Image
-from hwp2html import PUA, HANGUL_DELTA, SPLIT_ON, split_plan, head_rows, spacing_css      # 한컴 Wingdings/Symbol 글머리(U+F09F 등) -> 일반 유니코드. 브라우저는 사설 영역 문자를 못 그린다
+from hwp2html import PUA, HANGUL_DELTA, SPLIT_ON, split_plan, head_rows, spacing_css, keep_rows      # 한컴 Wingdings/Symbol 글머리(U+F09F 등) -> 일반 유니코드. 브라우저는 사설 영역 문자를 못 그린다
 
 _SL = os.environ.get('STORED_LAYOUT', '')
 STORED = _SL in ('1', 'all', 'lines')       # 저장된 줄 끊김대로
@@ -396,10 +396,11 @@ class Conv:
         for c in cells: rows.setdefault(c['r'], []).append(c)
         cellsplit = STORED and SPLIT_ON and tbl.get('pageBreak') == 'CELL'        # 셀 단위로 나뉘는 표만(HWP 는 표 속성 비트 0~1 = 2)
         nh = head_rows(len(rows), [dict(row=c['r'], rs=c['rs'], hd=c['hd']) for c in cells], tbl.get('repeatHeader') == '1')
+        keep = keep_rows(((c['r'], c['rs'], c['h'] / 100) for c in cells), min(rows), max(c['h'] for c in cells if c['r'] == min(rows)) / 100)
         if nh: out.append('<thead>')
         for r in sorted(rows):
             if nh and r == nh: out.append('</thead><tbody>')
-            out.append('<tr>')
+            out.append('<tr style="break-after:avoid">' if r in keep else '<tr>')
             rc = sorted(rows[r], key=lambda c: c['c'])
             mgs = [c['tc'].find(HP+'cellMargin') if c['tc'].get('hasMargin') == '1' else im for c in rc]
             plan = cellsplit and split_plan([(c['h'] / 100, (int(g.get('top')) + int(g.get('bottom'))) / 100, c['rs'], s.text_bottom(c['tc'].find(HP+'subList')))

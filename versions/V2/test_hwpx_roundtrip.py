@@ -214,6 +214,10 @@ def demo():
         sx = zipfile.ZipFile(tmp / 'a.hwpx').read('Contents/section0.xml').decode('utf-8')
         assert sx.count(' header="1"') >= th.count('<thead>'), '왕복에서 제목 셀 표시가 사라짐'
     print('표 제목 줄 반복 OK')
+    kr = hwp2html.keep_rows        # 쪽 경계에서 다음 줄과 안 갈라야 하는 줄: 걸친 칸 묶음(≤150pt)·낮은 첫 줄(≤30pt)
+    assert kr([(1, 2, 139)], 0, 22.3) == {0, 1}, '제출 서류 표: 첫 줄 + 걸친 묶음의 윗줄'
+    assert kr([(1, 2, 300)], 0, 22.3) == {0} and kr([(1, 2, 139)], 0, 120) == {1}, '큰 묶음·높은 첫 줄은 가를 수 있다'
+    print('표 줄 붙이기 OK')
     # HTML 은 글꼴 폭 보정(--hd)을 따로 적어 letter-spacing 에 안 섞고, PDF 로 찍을 때만 더한다 / PDF 용 줄 꺾임 보정(어절 안 끊기·문단 끝 글자 간격 0)
     import re as _re
     assert hwp2html.spacing_css(0, 0.056) == ['--hd:0.056em'] and hwp2html.spacing_css(-0.05, 0.056) == ['letter-spacing:-0.05em', '--hd:0.056em;--ls:-0.05em'] and hwp2html.spacing_css(0, 0) == []
@@ -228,6 +232,15 @@ def demo():
     t = convert._TAIL.sub(convert._tail_spacing, '<p><span style="font-size:10pt;--hd:0.056em;--ls:0.01em;letter-spacing:0.01em">[공급기업]</span></p>')
     assert t == '<p><span style="font-size:10pt;--hd:0.056em;--ls:0.01em;letter-spacing:0.01em">[공급기업</span><span style="font-size:10pt;letter-spacing:0">]</span></p>', t
     print('PDF 줄 꺾임 보정 OK')
+    # 자기 설명(--capabilities): JSON 으로 나오고, 한도가 app.py 의 값과 같고, 길 표와 맞는다
+    import json as _json, subprocess as _sp, sys as _sys
+    cap = convert.capabilities()
+    assert {(r['from'], r['to']) for r in cap['routes']} == set(convert.ROUTES) and ('hwp', 'hwpx') in convert.ROUTES, '길 표와 다름'
+    app_src = (HERE / 'app.py').read_text(encoding='utf-8')
+    assert f"TIMEOUT = {cap['limits']['convert_timeout_seconds']} " in app_src and f"MAX_PARALLEL = {cap['limits']['parallel_conversions']} " in app_src, 'app.py 한도와 다름'
+    r = _sp.run([_sys.executable, str(HERE / 'convert.py'), '--capabilities'], capture_output=True, encoding='utf-8')
+    assert r.returncode == 0 and _json.loads(r.stdout)['name'] == 'file-conversation', r.stderr
+    print('capabilities OK')
 
 
 if __name__ == '__main__':

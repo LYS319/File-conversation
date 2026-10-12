@@ -174,6 +174,8 @@ def main():
         vls = [r for r in rs if r.get('vl') is not None]; vtxt = f'세로선 일치 {round(sum(r["vl"] * r["vln"] for r in vls) / max(1, sum(r["vln"] for r in vls)), 3)}({sum(r["vln"] for r in vls)}개) · ' if vls else ''
         return (f'{tag}: {len(rs)}건 · 쪽 수 같음 {same} · 차이 합계 {gap} · 글재현 {m("recall")} · 글정밀 {m("prec")} · 쪽시작 {m("start")} · '
                 f'dy 중앙값의 평균 {round(statistics.mean(dy), 1) if dy else None} · {vtxt}유사도 {m("ink")}')
+    env = sorted({(m.get('oracle_env') or {}).get('producer') or (f"한컴 {m['hancom']}" if m.get('hancom') else '출처 미기록') for m in man})
+    lines += ['', '※ 정답지(한컴 PDF)는 한컴 버전·OS·글꼴·출력 경로에 따라 쪽 나눔이 달라질 수 있어 절대 정답이 아니라 비교 기준이다. 정답지 출처: ' + ', '.join(env)]
     lines += ['', agg(ok, '전체'), agg([r for r in ok if r['split'] == 'dev'], 'dev'), agg([r for r in ok if r['split'] == 'holdout'], 'holdout'),
               f"정답 의심(집계 제외) {len(sus)}건: " + ', '.join(r['doc'][-30:] for r in sus),
               f"실패 {sum('fail' in r for r in rows)}건: " + ', '.join(r['doc'][-30:] for r in rows if 'fail' in r)]

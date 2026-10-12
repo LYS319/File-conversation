@@ -1,6 +1,6 @@
 # File-conversation (HWP/HWPX/HTML/PDF 변환 공장)
 
-새 세션이면 **먼저 `docs/인수인계_2026-10-07.md` 를 읽는다**(현재 상태·명령·결정·다음 작업·함정). 도구는 `versions/V2/devtools/README.md`.
+새 세션이면 **먼저 `docs/현재상태.md` 를 읽는다**(기준선·명령·결정·다음 작업. 이력은 `docs/작업기록/`, 함정은 `docs/함정.md`, 형식 지식은 `docs/지식/`; `docs/` 는 개인 문서라 저장소에는 없다). 도구는 `versions/V2/devtools/README.md`.
 
 ## 꼭 지킬 것
 - `versions/V1` 은 수정 금지. 개발은 `versions/V2` 에서만. 결과물은 `results/V번호_…` 새 폴더에.

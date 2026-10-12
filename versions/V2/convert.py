@@ -1,5 +1,6 @@
 """HWP / HWPX / HTML 통합 진입점. 입력 형식은 확장자가 아니라 내용(매직 바이트)으로 알아내고, 출력 형식은 출력 확장자로 정한다.
     python convert.py 입력파일 출력파일(.html | .hwpx | .pdf) [--approval 담당,검토,확인,승인]
+    python convert.py --capabilities      (이 환경에서 되는 변환·옵션·한도·종료 코드를 JSON 으로 출력)
 지원: hwp->html, hwp->hwpx(hwp-cli 직접 변환, 없거나 실패하거나 결재선이면 HTML 을 거치는 자체 변환), hwpx->html, html->hwpx, 그리고 (weasyprint 가 있으면) html·hwp·hwpx->pdf.
 --approval 을 주면 문서 맨 위 오른쪽에 결재선 표를 넣는다"""
 import importlib.util, json, os, re, shutil, subprocess, sys, tempfile, zipfile
@@ -185,6 +186,31 @@ if importlib.util.find_spec('weasyprint'):      # PDF 는 weasyprint(+Pango, 한
                    ('hwpx', 'pdf'): _via_html(_stored_pdf(hwpx2html.convert), _to_pdf)})
 
 
+ENGINES = {('hwp', 'html'): 'hwp2html(자체)', ('hwpx', 'html'): 'hwpx2html(자체)', ('html', 'hwpx'): 'html2hwpx(자체)',
+           ('hwp', 'hwpx'): 'hwp-cli 직접 변환(없거나 실패하거나 결재선이면 자체)', ('html', 'pdf'): 'WeasyPrint(어절 보호)',
+           ('hwp', 'pdf'): 'hwp2html → WeasyPrint(한컴이 저장한 줄 끊김대로)', ('hwpx', 'pdf'): 'hwpx2html → WeasyPrint(한컴이 저장한 줄 끊김대로)'}
+
+
+def capabilities():
+    """기계가 읽는 자기 설명: 이 환경에서 되는 변환 길·옵션·한도·환경변수·종료 코드·거절하는 입력(사람은 README 를 보면 된다).
+    한도 중 변환 제한 시간·동시 변환 수는 app.py 의 값과 같아야 한다(시험이 대조한다)."""
+    return {
+        'name': 'file-conversation', 'detect_input': '확장자가 아니라 내용(매직 바이트)으로 판별', 'inputs': ['hwp', 'hwpx', 'html'],
+        'output_by_extension': {'.html': 'html', '.htm': 'html', '.hwpx': 'hwpx', '.pdf': 'pdf'},
+        'routes': [{'from': a, 'to': b, 'engine': ENGINES[(a, b)]} for a, b in sorted(ROUTES)],
+        'pdf_available': ('hwp', 'pdf') in ROUTES, 'hwp_cli_available': find_hwp_cli() is not None,
+        'options': [{'flag': '--approval', 'value': '담당,검토,확인,승인(쉼표로 구분, 값을 생략하면 기본값)', 'effect': '문서 맨 위 오른쪽에 결재선 표를 넣는다. hwp→hwpx 는 hwp-cli 대신 자체 변환기로 바뀐다'},
+                    {'flag': '--capabilities', 'effect': '이 JSON 을 출력하고 끝낸다'}],
+        'limits': {'upload_bytes': hwp2html.MAX_BYTES, 'hwp_stream_bytes': hwp2html.MAX_STREAM, 'hwpx_unzipped_bytes': hwpx2html.MAX_ZIP_BYTES,
+                   'convert_timeout_seconds': 120, 'parallel_conversions': 3, 'hwp_cli_timeout_seconds': HWP_CLI_TIMEOUT},
+        'environment': {'HWP_CLI': "off 이면 hwp-cli 를 끄고, 경로면 그 실행 파일을 쓴다", 'STORED_LAYOUT': "off 이면 PDF 에서 한컴이 저장한 줄 끊김을 따르지 않는다(기본 lines)",
+                        'SPLIT_ROWS': "off 이면 큰 표 행 나눔을 끈다(기본 on)", 'SPLIT_MIN': '행 나눔 임계값 pt(기본 300)', 'KEEP_ROWS': "표 행 붙이기: span,first(기본) 또는 off"},
+        'exit_codes': {'0': '성공(결과 요약 dict 를 stdout 에 출력)', '1': '실패(원인 한 줄이 stderr 에 "오류: …" 로, 사용법 오류면 사용법)'},
+        'stderr_prefixes': {'경고:': '변환은 끝났지만 손실·대체가 있음(옮기지 못한 항목, hwp-cli 대신 자체 변환기 사용, 사설 영역 문자 등)', '오류:': '변환 실패'},
+        'rejects': ['HWP 3.0(옛 형식)', '암호·배포용·DRM 이 걸린 HWP', '업로드 한도(100MB) 초과', '손상된 파일', 'HWPX 가 아닌 ZIP', 'HTML 태그가 없는 텍스트'],
+    }
+
+
 def convert(src, dst, approval=None):
     """approval: 결재선 칸 이름들(예: ('담당','검토','확인','승인')). None 이면 결재선 없음."""
     kind = detect(src)
@@ -198,6 +224,8 @@ def convert(src, dst, approval=None):
 
 if __name__ == '__main__':
     args, labels = sys.argv[1:], None
+    if '--capabilities' in args:
+        print(json.dumps(capabilities(), ensure_ascii=False, indent=2)); sys.exit(0)
     if '--approval' in args:
         i = args.index('--approval'); labels = approval_mod.labels_from(args[i + 1]) if i + 1 < len(args) else approval_mod.DEFAULT; del args[i:i + 2]
     if len(args) != 2: sys.exit(__doc__)

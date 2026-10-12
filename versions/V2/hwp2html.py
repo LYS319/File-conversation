@@ -599,6 +599,23 @@ def split_plan(cells):
     return any(SPLIT_FILL * (h - pad) <= ct <= SPLIT_OVER * (h - pad) and h > pad for h, pad, _, ct in cells)      # 칸 높이는 한컴이 저장한 실제 행 높이라 글이 그보다 훨씬 크면(근무계획서 287pt 칸에 475pt) 줄 정보가 떠 있는 개체·중첩 표를 센 것이니 믿지 않는다
 
 
+KEEP_ROWS = os.environ.get('KEEP_ROWS') or 'span,first'      # 'span' 걸친 칸 묶음 붙이기 · 'first' 낮은 표 첫 줄 붙이기
+KEEP_FIRST = float(os.environ.get('KEEP_FIRST', 30))      # pt. 이 높이 이하인 첫 줄만 다음 줄에 붙인다
+KEEP_MAX = float(os.environ.get('KEEP_MAX', 150))      # pt. 이보다 큰 묶음은 한컴도 가른다고 본다(큰 묶음이 많은 문서에서 쪽이 늘었다)
+
+
+def keep_rows(spans, first, first_h=0):
+    """쪽 끝에서 바로 다음 줄과 갈라지면 안 되는 줄 번호 집합. spans: [(줄 번호, 걸친 줄 수, 걸친 칸 높이 pt)].
+    한컴은 아래 줄로 걸친 칸(rowspan)이 든 줄 묶음을 쪽 경계에서 가르지 않고, 표의 첫 줄만 쪽 아래에 홀로 남기지 않는다고 본다(공고문 7쪽 '제출 서류' 표: 남은 105pt 에
+    첫 줄 22pt + 걸친 칸 묶음 139pt 가 안 들어가자 표 전체를 8쪽 맨 위로 보냄; 우리는 첫 줄 + 묶음의 윗줄만 7쪽에 두고 가름). WeasyPrint 는 `tr{break-after:avoid}` 를 지킨다(시험)."""
+    keep = set()
+    if 'span' in KEEP_ROWS:
+        for r, rs, h in spans:
+            if h <= KEEP_MAX: keep.update(range(r, r + rs - 1))
+    if 'first' in KEEP_ROWS and first_h <= KEEP_FIRST: keep.add(first)      # 제목처럼 낮은 첫 줄만(높은 첫 줄은 한컴도 쪽 아래에서 가른다: 'first' 를 가리지 않고 켜면 사용자 회의록이 0.543→0.155)
+    return keep
+
+
 def head_rows(nrow, cells, repeat):
     """표 맨 위에서 '제목 셀'(HWP 칸 속성 비트 18, HWPX tc header=1)이 든 줄 수 — 표 속성의 '제목 줄 자동 반복'(HWP 비트 2, HWPX repeatHeader)이 켜졌을 때만. 한컴은 표가 쪽을 넘으면 이 줄들을
     다음 쪽 맨 위에 되풀이해 그린다(pr-1674 한컴 19쪽). `<thead>` 로 내면 WeasyPrint 가 쪽마다 반복한다. 제목 줄 밖으로 걸친 칸(rowspan)이 있거나 표가 이 줄뿐이면 0.
@@ -673,10 +690,11 @@ def render_table(ctl, inline=False, pa=None):
     out = ['<table class="hwp-table" style="%s"><colgroup>%s</colgroup>' % (';'.join(st), ''.join('<col style="width:%gpt">' % (w / 100) for w in colw))]
     cellsplit = STORED and SPLIT_ON and len(tbl.p) >= 4 and struct.unpack_from('<I', tbl.p, 0)[0] & 3 == 2        # 표 속성 비트 0~1: 0 나누지 않음·1 행 단위로만·2 셀 단위로 나눔(hwp-cli 가 쓴 HWPX pageBreak NONE/TABLE/CELL 과 대조; 공식 문서 표 75 의 '2 나누지 않음'은 오타)
     nh = head_rows(rows, cells, len(tbl.p) >= 4 and struct.unpack_from('<I', tbl.p, 0)[0] >> 2 & 1)
+    keep = keep_rows(((x['row'], x['rs'], x['h'] / 100) for x in cells), 0, max((x['h'] for x in cells if x['row'] == 0), default=0) / 100)
     if nh: out.append('<thead>')
     for r in range(rows):
         if nh and r == nh: out.append('</thead><tbody>')
-        out.append('<tr>')
+        out.append('<tr style="break-after:avoid">' if r in keep else '<tr>')
         rc = [x for x in cells if x['row'] == r]
         plan = cellsplit and split_plan([(x['h'] / 100, sum((x['mg'] or (510, 510, 141, 141))[2:]) / 100, x['rs'], text_bottom(x['paras'])) for x in rc])
         for cell in rc:
