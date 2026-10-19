@@ -1,0 +1,11 @@
+claude-agent-sdk==0.2.153
+python-dotenv
+langfuse
+openinference-instrumentation-claude-agent-sdk
+pdfplumber
+lxml
+magika==0.6.3
+pymupdf==1.28.2
+pillow==12.3.0
+streamlit==1.65.0
+weasyprint==70.0        # PDF 변환용. Pango 와 글꼴이 필요해서 Docker 이미지에서만 쓴다(Windows .venv 에는 깔지 않으면 PDF 선택지가 화면에서 빠진다)

@@ -1,0 +1,32 @@
+import json, pymupdf
+from pathlib import Path
+from PIL import Image, ImageOps
+IN, OURS, CLI = Path('/in'), Path('/ours'), Path('/cli')
+man = [m for m in json.loads((IN / 'manifest.json').read_text(encoding='utf-8')) if 'oracle_pdf' in m]
+def grid(page):
+    pm = page.get_pixmap(matrix=pymupdf.Matrix(0.6, 0.6), colorspace=pymupdf.csGRAY)
+    im = ImageOps.invert(Image.frombytes('L', (pm.width, pm.height), pm.samples)).resize((40, 56), Image.BOX)
+    return list(im.getdata())
+def sim(a, b):
+    num = sum(min(x, y) for x, y in zip(a, b)); den = sum(max(x, y) for x, y in zip(a, b))
+    return num / den if den else 1.0
+def score(ref, x):
+    n = max(len(ref), len(x)); s = 0
+    for i in range(n):
+        s += sim(grid(ref[i]), grid(x[i])) if i < len(ref) and i < len(x) else 0
+    return s / n
+HX, ORIG = Path('/hx'), Path('/cli')
+rows = []; tot = {'orig': 0, 'ours': 0, 'cli': 0}; cnt = {'orig': 0, 'ours': 0, 'cli': 0}; n = 0
+for i, m in enumerate(man):
+    stem = Path(m['path']).stem
+    if not m['path'].endswith('.hwp'): continue
+    n += 1
+    ref = pymupdf.open(str(IN / m['oracle_pdf']))
+    r = {'doc': m['path'][-30:], 'ref': len(ref)}
+    for k, f in (('orig', ORIG / f'{i:02d}_{stem}.pdf'), ('ours', HX / f'{i:02d}_ours.pdf'), ('cli', HX / f'{i:02d}_cli.pdf')):
+        x = pymupdf.open(str(f)); r[k] = len(x); r[k + '_s'] = score(ref, x)
+        tot[k] += r[k + '_s']; cnt[k] += r[k] == len(ref)
+    rows.append(r)
+print('문서 | 한컴쪽 | 원본HWP를 hwp-cli로 그림 | 우리HWPX(hwp-cli로 그림) | cliHWPX(hwp-cli로 그림)')
+for r in rows: print(f"{r['doc']} | {r['ref']} | {r['orig']} {r['orig_s']:.2f} | {r['ours']} {r['ours_s']:.2f} | {r['cli']} {r['cli_s']:.2f}")
+print(f"평균 {tot['orig']/n:.3f} | {tot['ours']/n:.3f} | {tot['cli']/n:.3f}  쪽수일치 {cnt['orig']}/{n} | {cnt['ours']}/{n} | {cnt['cli']}/{n}")

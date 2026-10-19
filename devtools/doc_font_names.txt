@@ -1,0 +1,154 @@
+# 시험 문서(corpus/rhwp·rhwp2)에서 쓰인 글꼴 이름 153종(사용한 문서 수 순). build_font_metrics.py 가 rhwp 표에 없어도 이 PC 에 설치돼 있으면 폭표를 만든다.
+함초롬바탕
+함초롬돋움
+한양신명조
+바탕
+명조
+굴림
+한양중고딕
+한컴바탕
+휴먼명조
+맑은 고딕
+HCI Poppy
+HY헤드라인M
+돋움
+바탕체
+HY중고딕
+한양견명조
+돋움체
+신명 견명조
+HY견고딕
+굴림체
+산세리프
+한컴돋움
+한양견고딕
+Times New Roman
+#신명조
+신명 태명조
+-윤고딕130
+신명 중고딕
+HY견명조
+신명조■얒a
+HY각헤드라인M
+신명 신명조
+HY신명조
+#세명조
+HCR Dotum
+궁서
+-윤고딕220
+HCI Tulip
+신명 중명조
+#태고딕
+신명 태고딕
+휴먼고딕
+Arial
+신명 디나루
+신명 신그래픽
+Gulim
+-윤명조120
+#태명조
+신명 태그래픽
+한양그래픽
+HY수평선B
+나눔고딕
+-윤명조320
+신명 세명조
+KoPub돋움체 Light
+산돌명조 L
+한컴 소망 B
+Batang
+Malgun Gothic
+HY울릉도M
+Verdana
+한컴 고딕
+-윤고딕320
+-윤고딕120
+KoPub바탕체 Light
+양재튼튼체B
+MD솔체
+나눔명조
+#신디나루
+#디나루
+Lucida Console
+한컴 윤고딕 760
+휴먼옛체
+Yoon 윤명조 420_TT
+Arial Narrow
+Yoon 윤고딕 520_TT
+-윤명조130
+Haansoft Batang
+나눔바른고딕
+#중고딕
+휴먼엑스포
+Tahoma
+시스템
+한양해서
+Arial-BoldMT
+산돌고딕 M
+휴먼둥근헤드라인
+나눔고딕 ExtraBold
+나눔스퀘어 Bold
+한컴 윤체 B
+HY바다L
+휴먼모음T
+한컴 쿨재즈 B
+한컴 윤고딕 240
+서울헤드라인
+양재난초체M
+한양신명조V
+신명조 간자
+#견명조
+한겨레결체
+#중명조
+HY수평선M
+타이프
+한양궁서
+HCR Batang
+HCI Hollyhock
+HY울릉도B
+DX새고딕 Std 20
+SM3신중고딕 01
+-윤고딕140
+Courier New
+Calibri
+HYHeadLine-Medium
+KoPub바탕체 Bold
+Haansoft Dotum
+Cambria
+HY동녘M
+샘물
+산돌명조
+함초롬바탕 확장B
+#그래픽
+경기천년제목 Light
+#신문태명
+-윤명조340
+산돌고딕B
+08서울남산체 B
+신명 견고딕
+한컴 윤고딕 720
+-윤명조310
+휴먼태엑스포
+NotoSansKR-Regular
+Arial TUR
+-윤명조110
+#태신명조
+HY그래픽
+궁서체
+HCI Morning Glory
+양재 튼튼B
+HY엽서M
+산돌명조 M
+휴먼매직체
+-윤고딕230
+태 나무
+고딕
+현대송강체
+-구름L
+신명 신문명조
+나눔고딕_코딩
+신명 신신명조
+나눔고딕 Light
+BatangChe
+HYHeadLine M
+한컴 소망 M

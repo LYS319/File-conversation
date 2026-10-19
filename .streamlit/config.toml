@@ -1,0 +1,6 @@
+[server]
+maxUploadSize = 100     # MB. hwp2html의 입력 상한(100MB)과 맞춘다 — 기본 200MB면 다 올린 뒤에야 거부된다
+address = "localhost"   # 기본값(전 인터페이스)이면 같은 네트워크의 누구나 업로드할 수 있다. 사내 공개는 인증·격리를 갖춘 뒤에 바꾼다.
+
+[browser]
+gatherUsageStats = false
