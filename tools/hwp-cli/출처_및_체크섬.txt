@@ -1,0 +1,22 @@
+hwp-cli (HWP/HWPX 도구)  — 프로젝트에서 쓰는 외부 실행 파일 기록
+버전      : v1.3.1 (2026-09-27 릴리스)
+출처      : https://github.com/STAIxBWLB/hwp-cli/releases/tag/v1.3.1
+받은 파일 : hwp-v1.3.1-x86_64-pc-windows-msvc.zip
+라이선스  : MIT 또는 Apache-2.0 (LICENSE-MIT, LICENSE-APACHE, NOTICE 동봉)
+받은 날짜 : 2026-10-06
+
+[체크섬]
+zip (릴리스에 공개된 값과 실제 값이 일치함 확인):
+  307422ebe4c739d825baa6e29fbc3d93e23eb2b15949afb374f4ee0feea9b741
+hwp.exe (위 zip에서 꺼낸 파일):
+  e39bf54c2615d53a4286f5bd323ea32372292263751e5cf4f16dd46a6ca48978
+
+[확인 방법]  PowerShell:  Get-FileHash tools\hwp-cli\hwp.exe -Algorithm SHA256
+값이 위와 다르면 파일이 바뀐 것이니 쓰지 말 것.
+
+[이 프로젝트에서의 용도]
+  hwp convert x.hwp -o x.hwpx     .hwp -> HWPX (사진 포함)
+  hwp validate x.hwpx             HWPX 구조 검사
+  hwp render x.hwpx -o x.pdf      쪽 렌더 (한컴 없이)
+  hwp compare a.hwpx b.hwpx       두 문서의 텍스트·구조 차이
+  hwp diff                        렌더와 한컴 기준 PNG 비교

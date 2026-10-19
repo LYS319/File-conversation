@@ -1,0 +1,8 @@
+# 허용 목록 방식: 아래 이름만 빌드에 보낸다. .env(API 키), langfuse/, samples/, results/, tools/, .venv, logs/는 들어가지 않는다.
+*
+!app.py
+!convert.py
+!hwp2html.py
+!hwpx2html.py
+!html2hwpx.py
+!.streamlit/config.toml
