@@ -1,0 +1,9 @@
+rhwp v0.8.7 (linux x86_64) — 개발용 비교 도구. 운영 이미지·앱에는 들어가지 않는다.
+출처: https://github.com/edwardkim/rhwp/releases/tag/v0.8.7  (태그 커밋 1a76570e83…, 2026-10-06 게시, 라이선스 MIT — LICENSE 동봉)
+받은 파일: rhwp-v0.8.7-linux-x86_64.tar.gz
+  sha256 24de2bdaa0b69f86302a27e7fdfb570ad3c53b0ab3a4eac06446adc651dfb988
+  확인(2026-10-08): 같은 릴리스의 SHA256SUMS.txt 와 GitHub 릴리스 API 의 digest 와 일치. 서명(공개키)은 확인하지 못했다.
+압축을 풀어 나온 실행 파일 rhwp (27,174,512 바이트)
+  sha256 680dad67d63e7e4f09a826ec4a4d7ed233b81821205594539eb338bfc1e4b3b8   ← 우리가 압축 해제 후 계산한 값
+사용: 격리 컨테이너에서만(--network none --read-only --cap-drop ALL). 윈도에서 직접 실행하지 않는다(리눅스 빌드).
+이 값과 다르면 쓰지 말 것.
